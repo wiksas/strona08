@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>WDPAI: kolokwium Git, Docker, HTML, CSS, Figma (test ABCD)</title>
+  <meta name="description" content="Test jednokrotnego wyboru z WDPAI: pozycjonowanie CSS, nakładki, Flexbox, Media Queries, @media print, PHP, MVC, Docker i Git.">
+  <script>
+    // Ustawia motyw przed wczytaniem CSS, żeby nie mignął jasny ekran (FOUC), tak jak w Lab 5.
+    (function () {
+      var saved = null;
+      try { saved = localStorage.getItem('theme'); } catch (e) { saved = null; }
+      var hasSaved = saved === 'light' || saved === 'dark';
+      var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      document.documentElement.dataset.theme = hasSaved ? saved : (prefersDark ? 'dark' : 'light');
+    })();
+  </script>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="js/data/topics.js" defer></script>
+  <script src="js/data/q-css.js" defer></script>
+  <script src="js/data/q-php.js" defer></script>
+  <script src="js/data/q-tools.js" defer></script>
+  <script src="js/data/q-kolokwium.js" defer></script>
+  <script src="js/theme.js" defer></script>
+  <script src="js/app.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar__inner">
+      <p class="brand"><span class="brand__code">WDPAI</span> test z laboratoriów 1-6</p>
+      <button class="theme-toggle" type="button" aria-pressed="false" aria-label="Włącz ciemny motyw">
+        <svg class="theme-toggle__icon theme-toggle__icon--moon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">
+          <path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+        </svg>
+        <svg class="theme-toggle__icon theme-toggle__icon--sun" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">
+          <circle cx="12" cy="12" r="4.5" fill="none" stroke="currentColor" stroke-width="2"/>
+          <path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <main id="main" class="page">
+    <noscript>
+      <div class="notice notice--error">
+        <p><strong>Test wymaga JavaScriptu.</strong> Włącz go w przeglądarce i odśwież stronę.</p>
+      </div>
+    </noscript>
+
+    <div class="notice notice--error" id="load-error" role="alert" hidden>
+      <p><strong>Nie udało się wczytać pytań.</strong></p>
+      <p id="load-error-detail">Sprawdź, czy katalog <code>js/data</code> leży obok pliku <code>index.html</code>, i odśwież stronę.</p>
+    </div>
+
+    <!-- Ekran 1: wybór zakresu -->
+    <section id="screen-start" class="screen" aria-labelledby="start-title" hidden>
+      <h1 id="start-title">Kolokwium: Git, Docker, HTML, CSS, Figma</h1>
+      <p class="lead" id="start-lead"></p>
+
+      <div class="resume" id="resume" hidden>
+        <p id="resume-text"></p>
+        <div class="resume__actions">
+          <button type="button" class="btn btn--primary" id="resume-continue">Wróć do testu</button>
+          <button type="button" class="btn btn--quiet" id="resume-discard">Odrzuć i zacznij od nowa</button>
+        </div>
+      </div>
+
+      <form id="setup" class="setup" novalidate>
+        <fieldset class="setup__block">
+          <legend>Działy</legend>
+          <div class="presets" role="group" aria-label="Szybki wybór działów">
+            <button type="button" class="btn btn--small" data-preset="css">Tylko lista zagadnień (CSS)</button>
+            <button type="button" class="btn btn--small" data-preset="all">Wszystkie</button>
+            <button type="button" class="btn btn--small" data-preset="none">Wyczyść</button>
+          </div>
+          <div id="topic-groups"></div>
+        </fieldset>
+
+        <fieldset class="setup__block">
+          <legend>Liczba pytań</legend>
+          <div class="choice-row" id="count-options"></div>
+        </fieldset>
+
+        <fieldset class="setup__block">
+          <legend>Tryb</legend>
+          <label class="choice">
+            <input type="radio" name="mode" value="learn" checked>
+            <span><strong>Nauka.</strong> Po każdej odpowiedzi widzisz, czy jest poprawna, i krótkie wyjaśnienie.</span>
+          </label>
+          <label class="choice">
+            <input type="radio" name="mode" value="exam">
+            <span><strong>Egzamin.</strong> Możesz zmieniać odpowiedzi, wynik i wyjaśnienia zobaczysz na końcu.</span>
+          </label>
+        </fieldset>
+
+        <div class="setup__submit">
+          <button type="submit" class="btn btn--primary btn--large" id="start-btn">Rozpocznij test</button>
+          <p class="hint" id="start-hint" aria-live="polite"></p>
+        </div>
+      </form>
+    </section>
+
+    <!-- Ekran 2: pytania -->
+    <section id="screen-quiz" class="screen quiz" aria-label="Test" hidden>
+      <div class="quiz__bar">
+        <p class="quiz__counter" id="quiz-counter"></p>
+        <div class="progress" aria-hidden="true"><div class="progress__fill" id="progress-fill"></div></div>
+        <button type="button" class="btn btn--small" id="finish-btn">Zakończ test</button>
+      </div>
+
+      <div class="quiz__layout">
+        <article class="sheet question" id="question">
+          <p class="question__topic" id="q-topic"></p>
+          <h2 class="question__text" id="q-text" tabindex="-1"></h2>
+          <div id="q-code"></div>
+          <ol class="answers" id="answers" aria-label="Odpowiedzi"></ol>
+          <div class="feedback" id="feedback" aria-live="polite"></div>
+          <p class="hint hint--keys">Klawiatura: <kbd>A</kbd>-<kbd>D</kbd> lub <kbd>1</kbd>-<kbd>4</kbd> wybiera odpowiedź, <kbd>←</kbd> <kbd>→</kbd> zmienia pytanie.</p>
+        </article>
+
+        <aside class="sheet card" aria-labelledby="card-title">
+          <h2 class="card__title" id="card-title">Karta odpowiedzi</h2>
+          <p class="card__summary" id="card-summary"></p>
+          <ol class="card__grid" id="card-grid"></ol>
+          <ul class="legend" id="legend"></ul>
+        </aside>
+      </div>
+
+      <nav class="quiz__nav" aria-label="Przechodzenie między pytaniami">
+        <button type="button" class="btn" id="prev-btn">Poprzednie</button>
+        <button type="button" class="btn btn--primary" id="next-btn">Następne</button>
+      </nav>
+    </section>
+
+    <!-- Ekran 3: wynik -->
+    <section id="screen-result" class="screen result" aria-labelledby="result-title" hidden>
+      <h1 id="result-title" tabindex="-1">Wynik</h1>
+      <p class="result__score" id="result-score"></p>
+      <p class="result__meta" id="result-meta"></p>
+
+      <div class="result__actions">
+        <button type="button" class="btn btn--primary" id="retry-wrong">Powtórz błędne</button>
+        <button type="button" class="btn" id="retry-same">Nowe losowanie, te same ustawienia</button>
+        <button type="button" class="btn" id="back-setup">Zmień ustawienia</button>
+        <button type="button" class="btn btn--quiet" id="print-btn">Drukuj wynik</button>
+      </div>
+
+      <h2>Wynik według działów</h2>
+      <div class="table-wrap">
+        <table class="topic-table">
+          <thead>
+            <tr><th scope="col">Dział</th><th scope="col">Poprawne</th><th scope="col">Pytania</th><th scope="col">Procent</th></tr>
+          </thead>
+          <tbody id="topic-rows"></tbody>
+        </table>
+      </div>
+
+      <div class="review-head">
+        <h2>Przegląd odpowiedzi</h2>
+        <fieldset class="review-filter">
+          <legend class="visually-hidden">Pokaż</legend>
+          <label class="choice choice--inline"><input type="radio" name="review" value="wrong" checked> <span>Błędne i pominięte</span></label>
+          <label class="choice choice--inline"><input type="radio" name="review" value="all"> <span>Wszystkie</span></label>
+        </fieldset>
+      </div>
+      <ol class="review" id="review"></ol>
+      <p class="hint" id="review-empty" hidden></p>
+    </section>
+
+    <dialog class="dialog" id="finish-dialog" aria-labelledby="finish-dialog-title">
+      <h2 id="finish-dialog-title">Zakończyć test?</h2>
+      <p id="finish-dialog-text"></p>
+      <div class="dialog__actions">
+        <button type="button" class="btn" id="finish-cancel">Wróć do pytań</button>
+        <button type="button" class="btn btn--primary" id="finish-confirm">Zakończ i pokaż wynik</button>
+      </div>
+    </dialog>
+  </main>
+
+  <footer class="footer">
+    <div class="footer__inner">
+      <p>Pytania ułożone na podstawie materiałów z <a href="https://ii.pk.edu.pl/~awidlak/subject/16">laboratoriów 1-6 (mgr inż. Adrian Widłak)</a> oraz listy zagadnień do opanowania. To pomoc do nauki, nie oficjalny test prowadzącego.</p>
+      <p>Strona korzysta z technik, o które pyta: karta odpowiedzi ma <code>position: sticky</code>, pasek pytań na telefonie <code>position: fixed</code>, motyw działa przez <code>data-theme</code>, a wynik ma osobny styl <code>@media print</code>.</p>
+    </div>
+  </footer>
+</body>
+</html>
